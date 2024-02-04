@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<meta charset="UTF-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<title>Bug on wire</title>
+
+		<style>
+			body {
+				font-family: sans-serif;
+				overflow: hidden;
+				display: flex;
+				justify-content: center;
+			}
+
+			#score-wrapper {
+				display: flex;
+        font-weight: bold;
+        color: black;
+			}
+
+			#score {
+        margin-left: 10px;
+			}
+
+			#canvas {
+				display: block;
+				border: 2px solid black;
+				margin: 0 50px;
+			}
+		</style>
+	</head>
+	<body>
+		<canvas id="canvas" height="650" width="400"></canvas>
+		<div id="score-wrapper">
+			SCORE:
+			<div id="score">0</div>
+		</div>
+		<script src="app.js"></script>
+	</body>
+</html>
