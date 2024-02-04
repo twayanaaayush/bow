@@ -16,8 +16,8 @@ class Bug {
   constructor(color = "green") {
     this.color = color;
     this.size = {
-      width: 1 * SIZE_UNIT,
-      height: 1 * SIZE_UNIT,
+      width: SIZE_UNIT,
+      height: SIZE_UNIT,
     };
 
     this.spawn(); // set position
@@ -26,8 +26,8 @@ class Bug {
 
   spawn() {
     this.position = {
-      x: Math.floor(Math.random() * (CANVAS_WIDTH / SIZE_UNIT)),
-      y: COLUMN_HEIGHT / SIZE_UNIT - 2, // 1 more than object's height
+      x: (Math.floor(Math.random() * (CANVAS_WIDTH / SIZE_UNIT))) * SIZE_UNIT,
+      y: (COLUMN_HEIGHT / SIZE_UNIT - 2) * SIZE_UNIT, // 1 more than object's height
     };
   }
 
@@ -56,20 +56,20 @@ class Bug {
   move(direction) {
     switch (direction) {
       case "left":
-        this.position.x -= 1;
-        if (this.checkBoundaryCollision()) this.position.x += 1;
+        this.position.x -= SIZE_UNIT;
+        if (this.checkBoundaryCollision()) this.position.x += SIZE_UNIT;
         break;
       case "right":
-        this.position.x += 1;
-        if (this.checkBoundaryCollision()) this.position.x -= 1;
+        this.position.x += SIZE_UNIT;
+        if (this.checkBoundaryCollision()) this.position.x -= SIZE_UNIT;
         break;
       case "up":
-        this.position.y -= 1;
-        if (this.checkBoundaryCollision()) this.position.y += 1;
+        this.position.y -= SIZE_UNIT;
+        if (this.checkBoundaryCollision()) this.position.y += SIZE_UNIT;
         break;
       case "down":
-        this.position.y += 1;
-        if (this.checkBoundaryCollision()) this.position.y -= 1;
+        this.position.y += SIZE_UNIT;
+        if (this.checkBoundaryCollision()) this.position.y -= SIZE_UNIT;
         break;
       default:
         break;
@@ -79,10 +79,10 @@ class Bug {
   checkBoundaryCollision() {
     //check collision with canvas boundary
     if (
-      this.position.y * this.size.height >= CANVAS_HEIGHT ||
-      this.position.y * this.size.height < 0 ||
-      this.position.x * this.size.width >= CANVAS_WIDTH ||
-      this.position.x * this.size.width < 0
+      this.position.y + this.size.height > CANVAS_HEIGHT ||
+      this.position.y < 0 ||
+      this.position.x + this.size.width > CANVAS_WIDTH ||
+      this.position.x < 0
     )
       return true;
 
@@ -91,14 +91,38 @@ class Bug {
 
   checkObstacleCollision() {
     //check collision with obstacle
+    const bug_xmin = this.position.x;
+    const bug_ymin = this.position.y;
+    const bug_xmax = this.position.x + this.size.width;
+    const bug_ymax = this.position.y + this.size.height;
+
     for (let i = 0; i < obstacles.length; ++i) {
+      const obstacle_xmin = obstacles[i].position.x;
+      const obstacle_ymin = obstacles[i].position.y;
+      const obstacle_xmax = obstacles[i].position.x + obstacles[i].size.width;
+      const obstacle_ymax = obstacles[i].position.y + obstacles[i].size.height;
       if (
-        this.position.x * this.size.width > obstacles[i].position.x && 
-        this.position.y < obstacles[i].position.y * obstacles[i].size.height &&
-        this.position.y * this.size.height > obstacles[i].position.y &&
-        this.position.x < obstacles[i].position.x * obstacles[i].size.width
-      )
+        bug_xmin <= obstacle_xmax &&
+        bug_xmax >= obstacle_xmin &&
+        bug_ymin <= obstacle_ymax &&
+        bug_ymax >= obstacle_ymin
+      ) {
+        console.log('player', {
+          xmin: bug_xmin,
+          ymin: bug_ymin,
+          xmax: bug_xmax,
+          ymax: bug_ymax
+        });
+        console.log('obstacle', {
+          xmin: obstacle_xmin,
+          ymin: obstacle_ymin,
+          xmax: obstacle_xmax,
+          ymax: obstacle_ymax
+        });
+
+        obstacles[i].color = "blue";
         return true;
+      }
 
       return false;
     }
@@ -115,19 +139,19 @@ class Bug {
   draw() {
     ctx.fillStyle = this.color;
     ctx.fillRect(
-      this.position.x * SIZE_UNIT,
-      this.position.y * SIZE_UNIT,
+      this.position.x,
+      this.position.y,
       this.size.width,
       this.size.height
     );
 
-    ctx.strokeStyle = "black";
-    ctx.strokeRect(
-      this.position.x * SIZE_UNIT,
-      this.position.y * SIZE_UNIT,
-      this.size.width,
-      this.size.height
-    );
+    // ctx.strokeStyle = "black";
+    // ctx.strokeRect(
+    //   this.position.x,
+    //   this.position.y,
+    //   this.size.width,
+    //   this.size.height
+    // );
   }
 }
 
@@ -136,8 +160,8 @@ class Obstacle {
     this.color = color;
     this.speed = 0.09; // speed of obstacle
     this.size = {
-      width: 1 * SIZE_UNIT,
-      height: 1 * SIZE_UNIT,
+      width: SIZE_UNIT,
+      height: SIZE_UNIT,
     };
 
     this.spawn(); // set position
@@ -145,39 +169,39 @@ class Obstacle {
 
   spawn() {
     this.position = {
-      x: Math.floor(Math.random() * (CANVAS_WIDTH / SIZE_UNIT)),
-      y: -Math.floor(Math.random() * (COLUMN_HEIGHT / SIZE_UNIT)),
+      x: (Math.floor(Math.random() * (CANVAS_WIDTH / SIZE_UNIT))) * SIZE_UNIT,
+      y: (-Math.floor(Math.random() * (COLUMN_HEIGHT / SIZE_UNIT))) * SIZE_UNIT,
     };
   }
 
   checkBoundary() {
     //check collision with canvas boundary
-    if (this.position.y * this.size.height > CANVAS_HEIGHT) {
+    if (this.position.y + this.size.height > CANVAS_HEIGHT) {
       this.spawn();
     }
   }
 
   update() {
     this.checkBoundary();
-    this.position.y = this.position.y + this.speed;
+    this.position.y += SIZE_UNIT * this.speed;
   }
 
   draw() {
     ctx.fillStyle = this.color;
     ctx.fillRect(
-      this.position.x * SIZE_UNIT,
-      this.position.y * SIZE_UNIT,
+      this.position.x,
+      this.position.y,
       this.size.width,
       this.size.height
     );
 
-    ctx.strokeStyle = "black";
-    ctx.strokeRect(
-      this.position.x * SIZE_UNIT,
-      this.position.y * SIZE_UNIT,
-      this.size.width,
-      this.size.height
-    );
+    // ctx.strokeStyle = "black";
+    // ctx.strokeRect(
+    //   this.position.x,
+    //   this.position.y,
+    //   this.size.width,
+    //   this.size.height
+    // );
   }
 }
 
