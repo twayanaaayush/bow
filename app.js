@@ -2,7 +2,7 @@ const canvas = document.getElementById("canvas");
 const ctx = canvas.getContext("2d");
 const scoreElement = document.getElementById("score");
 
-const SCORE = 0;
+let SCORE = 0;
 const CANVAS_WIDTH = canvas.width;
 const CANVAS_HEIGHT = canvas.height;
 
@@ -10,113 +10,224 @@ const COLUMN = 4;
 const COLUMN_WIDTH = CANVAS_WIDTH / COLUMN;
 const COLUMN_HEIGHT = CANVAS_HEIGHT;
 
-const OBJECT_UNIT = COLUMN_WIDTH / 2;
+const SIZE_UNIT = COLUMN_WIDTH;
 
-const Bug = {
-	color: "green",
-	speed: 5,
-	size: {
-		width: 1 * OBJECT_UNIT,
-		height: 1 * OBJECT_UNIT,
-	},
-	position: {
-		x: undefined,
-		y: undefined,
-	},
-	spawn: function () {
-		this.position.x =
-			Math.floor(Math.random() * (CANVAS_WIDTH / OBJECT_UNIT / 2)) * 2 + 0.5;
-		this.position.y = COLUMN_HEIGHT / OBJECT_UNIT - 2; // 1 more than object's height
-	},
-	update: function () {},
-	draw: function (context) {
-		context.fillStyle = this.color;
-		context.fillRect(
-			this.position.x * OBJECT_UNIT,
-			this.position.y * OBJECT_UNIT,
-			this.size.width,
-			this.size.height
-		);
-	},
-};
+class Bug {
+  constructor(color = "green") {
+    this.color = color;
+    this.size = {
+      width: 1 * SIZE_UNIT,
+      height: 1 * SIZE_UNIT,
+    };
 
-const Obstacle = {
-	color: "red",
-	size: {
-		width: 1 * OBJECT_UNIT,
-		height: 1 * OBJECT_UNIT,
-	},
-	position: {
-		x: undefined,
-		y: undefined,
-	},
-	spawn: function () {
-		this.position.x =
-			Math.floor(Math.random() * (CANVAS_WIDTH / OBJECT_UNIT / 2)) * 2 + 0.5;
-		this.position.y = Math.floor(
-			Math.random() * (COLUMN_HEIGHT / OBJECT_UNIT / 2)
-		);
-	},
-	update: function () {},
-	draw: function (context) {
-		context.fillStyle = this.color;
-		context.fillRect(
-			this.position.x * OBJECT_UNIT,
-			this.position.y * OBJECT_UNIT,
-			this.size.width,
-			this.size.height
-		);
-	},
-};
+    this.spawn(); // set position
+    this.initController(); // player controls
+  }
+
+  spawn() {
+    this.position = {
+      x: Math.floor(Math.random() * (CANVAS_WIDTH / SIZE_UNIT)),
+      y: COLUMN_HEIGHT / SIZE_UNIT - 2, // 1 more than object's height
+    };
+  }
+
+  initController() {
+    window.addEventListener("keydown", (e) => {
+      switch (e.key) {
+        case "ArrowLeft":
+          this.move("left");
+          break;
+        case "ArrowRight":
+          this.move("right");
+          break;
+        case "ArrowUp":
+          this.move("up");
+          break;
+        case "ArrowDown":
+          this.move("down");
+          break;
+
+        default:
+          break;
+      }
+    });
+  }
+
+  move(direction) {
+    switch (direction) {
+      case "left":
+        this.position.x -= 1;
+        if (this.checkBoundaryCollision()) this.position.x += 1;
+        break;
+      case "right":
+        this.position.x += 1;
+        if (this.checkBoundaryCollision()) this.position.x -= 1;
+        break;
+      case "up":
+        this.position.y -= 1;
+        if (this.checkBoundaryCollision()) this.position.y += 1;
+        break;
+      case "down":
+        this.position.y += 1;
+        if (this.checkBoundaryCollision()) this.position.y -= 1;
+        break;
+      default:
+        break;
+    }
+  }
+
+  checkBoundaryCollision() {
+    //check collision with canvas boundary
+    if (
+      this.position.y * this.size.height >= CANVAS_HEIGHT ||
+      this.position.y * this.size.height < 0 ||
+      this.position.x * this.size.width >= CANVAS_WIDTH ||
+      this.position.x * this.size.width < 0
+    )
+      return true;
+
+    return false;
+  }
+
+  checkObstacleCollision() {
+    //check collision with obstacle
+    for (let i = 0; i < obstacles.length; ++i) {
+      if (
+        this.position.x * this.size.width > obstacles[i].position.x && 
+        this.position.y < obstacles[i].position.y * obstacles[i].size.height &&
+        this.position.y * this.size.height > obstacles[i].position.y &&
+        this.position.x < obstacles[i].position.x * obstacles[i].size.width
+      )
+        return true;
+
+      return false;
+    }
+  }
+
+  update() {
+    if (this.checkObstacleCollision()) {
+      gameOver = true;
+      alert("Game Over");
+    }
+    SCORE++;
+  }
+
+  draw() {
+    ctx.fillStyle = this.color;
+    ctx.fillRect(
+      this.position.x * SIZE_UNIT,
+      this.position.y * SIZE_UNIT,
+      this.size.width,
+      this.size.height
+    );
+
+    ctx.strokeStyle = "black";
+    ctx.strokeRect(
+      this.position.x * SIZE_UNIT,
+      this.position.y * SIZE_UNIT,
+      this.size.width,
+      this.size.height
+    );
+  }
+}
+
+class Obstacle {
+  constructor(color = "red") {
+    this.color = color;
+    this.speed = 0.09; // speed of obstacle
+    this.size = {
+      width: 1 * SIZE_UNIT,
+      height: 1 * SIZE_UNIT,
+    };
+
+    this.spawn(); // set position
+  }
+
+  spawn() {
+    this.position = {
+      x: Math.floor(Math.random() * (CANVAS_WIDTH / SIZE_UNIT)),
+      y: -Math.floor(Math.random() * (COLUMN_HEIGHT / SIZE_UNIT)),
+    };
+  }
+
+  checkBoundary() {
+    //check collision with canvas boundary
+    if (this.position.y * this.size.height > CANVAS_HEIGHT) {
+      this.spawn();
+    }
+  }
+
+  update() {
+    this.checkBoundary();
+    this.position.y = this.position.y + this.speed;
+  }
+
+  draw() {
+    ctx.fillStyle = this.color;
+    ctx.fillRect(
+      this.position.x * SIZE_UNIT,
+      this.position.y * SIZE_UNIT,
+      this.size.width,
+      this.size.height
+    );
+
+    ctx.strokeStyle = "black";
+    ctx.strokeRect(
+      this.position.x * SIZE_UNIT,
+      this.position.y * SIZE_UNIT,
+      this.size.width,
+      this.size.height
+    );
+  }
+}
 
 function update() {
-	// scoreElement.innerHTML = score++;
-	// if (
-	// 	Bug.position.x * Bug.size.width ===
-	// 		Obstacle.position.x * Obstacle.size.width &&
-	// 	Bug.position.y * Bug.size.height ===
-	// 		Obstacle.position.y * Obstacle.size.height
-	// ) {
-	// 	alert("Game over!");
-	// 	return;
-	// }
-	// Bug.position.x += Bug.speed;
-	// Obstacle.position.x -= Bug.speed;
-	// if (Obstacle.position.x < 0) {
-	// 	Obstacle.position.x = canvas.width / Obstacle.size.width;
-	// 	Obstacle.position.y = Math.floor(
-	// 		Math.random() * (canvas.height / Obstacle.size.height)
-	// 	);
-	// 	score++;
-	// }
-	// if (Bug.position.x > canvas.width / Bug.size.width) {
-	// 	Bug.position.x = 0;
-	// }
+  for (let i = 0; i < bugs.length; ++i) bugs[i].update();
+  for (let i = 0; i < obstacles.length; ++i) obstacles[i].update();
 }
 
 function _drawColumn() {
-	for (c = 0; c < COLUMN; c++) {
-		ctx.strokeStyle = "black";
-		ctx.strokeRect(c * COLUMN_WIDTH, 0, COLUMN_WIDTH, COLUMN_HEIGHT);
-	}
+  for (c = 0; c < COLUMN; c++) {
+    ctx.strokeStyle = "black";
+    ctx.strokeRect(c * COLUMN_WIDTH, 0, COLUMN_WIDTH, COLUMN_HEIGHT);
+  }
 }
 
-function draw(context) {
-	_drawColumn();
+function draw() {
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-	Bug.draw(context);
-	Obstacle.draw(context);
+  _drawColumn();
+  for (let i = 0; i < bugs.length; ++i) bugs[i].draw();
+  for (let i = 0; i < obstacles.length; ++i) obstacles[i].draw();
+
+  scoreElement.innerHTML = SCORE; // update score element in HTML
 }
 
-function init() {
-	ctx.clearRect(0, 0, canvas.width, canvas.height);
+// global variables
+var gameOver = false;
+var timeInit = Date.now();
 
-	update();
-	draw(ctx);
+var bugs = [];
+var obstacles = [];
 
-	requestAnimationFrame(init);
+bugs.push(new Bug());
+
+for (let i = 0; i < 5; ++i) {
+  obstacles.push(new Obstacle());
+}
+//
+
+function loop() {
+  const now = Date.now();
+  const dt = now - timeInit;
+
+  if (dt > 1000 / 60) {
+    update();
+    draw();
+    timeInit = Date.now();
+  }
+
+  if (!gameOver) requestAnimationFrame(loop);
 }
 
-Bug.spawn();
-Obstacle.spawn();
-init();
+loop();
